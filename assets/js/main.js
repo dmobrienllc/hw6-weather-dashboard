@@ -1,10 +1,14 @@
 $(function() {
  
+    //is this bad design? Get parent div
+    let cardParentDiv = $("div.card-row");
+    console.log(cardParentDiv);
+
     function fetchForecastData(city){
         const apiKey = "1602cf34096adba596dbd657831f5ce9";
 
         let queryURL = "http://api.openweathermap.org/data/2.5/forecast?q=" 
-                            + city + "&units=imperial&cnt=1&appid=" + apiKey;
+                            + city + "&units=imperial&cnt=40&appid=" + apiKey;
         fetch(queryURL)
         .then(function (response) {
         if (response.ok) {
@@ -12,7 +16,7 @@ $(function() {
                 displayForecastData(data);
             });
         } else {
-            alert('Error: ' + response.statusText);
+            console.log('Not OK: ' + response.statusText);
         }
         })
             .catch(function (error) {
@@ -43,7 +47,10 @@ $(function() {
         tempSpan.text(data.list[0].main.temp + " F°");
         windSpan.text(data.list[0].wind.speed + " MPH");
         humSpan.text(data.list[0].main.humidity + "%");
+
         //TODO Render color based on how high the value is; apply a special class background
+        //Right now I don't think this is coming in  on the data., I could fake something out
+        //with the icons maybe?
         uvIndexSpan.text("75");
 
         let iconCode = data.list[0].weather[0].icon;
@@ -51,25 +58,53 @@ $(function() {
     }
 
     function displayForecastCards(data){
-        console.log(data);
-        alert("displayForecastCards: " + data.city.name)
+        //console.log(data);
+
+        //loop through the data elements, for now just grab
+        //the 9AM data point for the next 5 days?
+        $(data.list).each(function(index) {
+            buildForecastCard(index,this);
+          });
     }
 
-    function buildForecastCard(input){
-        let cardDivEl = $("<div>").addClass("class","col-12 col-md-6 col-lg-2 bg-dark text-light");
-        let h3El = $("<h3>");
-        let imgEl = $("<img>");
-        let pTempEL = $("<p>");
-        let pWindEL = $("<p>");
-        let pHumEL = $("<p>");
+    ///Only includes 9AM dates for now, easiest way to just
+    //get 5 days out there
+    function buildForecastCard(index,input){
+    
+        //we don't want the first one as that is the one we built our header
+        //date with, then only take 9AM for now
+        if(index>0 && input.dt_txt.includes("09:00:00")){
+            let cardDivEl = $("<div>").addClass("col-12 col-md-6 col-lg-2 p-1 bg-dark text-light");
+            let h3El = $("<h3>");
+            let imgEl = $("<img>");
+            let pTempEL = $("<p>");
+            let pWindEL = $("<p>");
+            let pHumEL = $("<p>");
 
-        // <div class="col-12 col-md-6 col-lg-2 bg-dark text-light">
-        //         <h3>6/24/2021</h3>
-        //         <img src="" alt="weather icon" title="weather icon">
-        //         <p>Temp: 73.5</p>
-        //         <p>Wind: 9.5 mph</p>
-        //         <p>Humidity: 44%</p>
-        //     </div>
+            //console.log(parent);
+            //console.log(input);
+            //populate values, make this into a method with the main
+            //daily card
+            console.log(input);
+            h3El.text("Date: " + input.dt_txt);
+
+            let iconCode = input.weather[0].icon;
+            imgEl.attr("src",`http://openweathermap.org/img/w/${iconCode}.png`);
+            imgEl.attr("alt","weather icon");
+            imgEl.attr("title","weather icon");
+        
+            pTempEL.text("Temp: " + input.main.temp + " F°");
+            pWindEL.text("Wind: " + input.wind.speed + " MPH");
+            pHumEL.text("Humidity: " + input.main.humidity + " %");
+
+            //build structure
+            cardDivEl.append(h3El);
+            cardDivEl.append(imgEl);
+            cardDivEl.append(pTempEL);
+            cardDivEl.append(pWindEL);
+            cardDivEl.append(pHumEL);
+            cardParentDiv.append(cardDivEl);
+        }
     }
 
     function saveSearchCity(city){
