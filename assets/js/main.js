@@ -1,8 +1,10 @@
 $(function() {
- 
+
+    let storedSearchCities;
+    let searchNamesArray = [];
+
     //is this bad design? Get parent div
     let cardParentDiv = $("div.card-row");
-    console.log(cardParentDiv);
 
     function fetchForecastData(city){
         const apiKey = "1602cf34096adba596dbd657831f5ce9";
@@ -38,10 +40,7 @@ $(function() {
         let humSpan = $("span#today-humidity");
         let uvIndexSpan = $("span#today-uv-index");
 
-        console.log(citySpan);
-
         citySpan.text(data.city.name);
-
         //TODO: Format Date using Moment JS
         dateSpan.text(data.list[0].dt_txt);
         tempSpan.text(data.list[0].main.temp + " F°");
@@ -58,10 +57,12 @@ $(function() {
     }
 
     function displayForecastCards(data){
-        //console.log(data);
 
-        //loop through the data elements, for now just grab
-        //the 9AM data point for the next 5 days?
+        console.log(cardParentDiv);
+        var cardDiv = document.getElementById("card-row"); 
+        //get ride of all divs with remove class
+        $('div.remove-card-div').remove()
+         
         $(data.list).each(function(index) {
             buildForecastCard(index,this);
           });
@@ -71,20 +72,20 @@ $(function() {
     //get 5 days out there
     function buildForecastCard(index,input){
     
+        let ulSavedCities =   $("#saved-search-cities");
+        
         //we don't want the first one as that is the one we built our header
-        //date with, then only take 9AM for now
+        //date with, then only take 9AM for now. do this more elegantly later
+        //for now it works
         if(index>0 && input.dt_txt.includes("09:00:00")){
-            let cardDivEl = $("<div>").addClass("col-12 col-md-6 col-lg-2 p-1 bg-dark text-light");
+            let cardDivEl = $("<div>")
+                .addClass("col-12 col-md-6 col-lg-2 p-1 bg-dark text-light remove-card-div");
             let h3El = $("<h3>");
             let imgEl = $("<img>");
             let pTempEL = $("<p>");
             let pWindEL = $("<p>");
             let pHumEL = $("<p>");
 
-            //console.log(parent);
-            //console.log(input);
-            //populate values, make this into a method with the main
-            //daily card
             console.log(input);
             h3El.text("Date: " + input.dt_txt);
 
@@ -107,10 +108,73 @@ $(function() {
         }
     }
 
+    //have to create button and append to the list and also store 
+    //in local storage
     function saveSearchCity(city){
-        alert("saveSearchCIty: " + city);
-        //if the city doesn't exist, add it
-        // let storedSearchCities = localStorage.setItem("storedCities","");   
+        const found = searchNamesArray.find(element => element === city);
+
+        if(!found){
+            searchNamesArray.push(city);
+            let stringifiedArray = JSON.stringify(searchNamesArray);
+            localStorage.setItem("stored-cities",stringifiedArray);
+            console.log(stringifiedArray);
+            alert("Search Item not found, add to array!");
+        }else{
+            alert("Search Item already existS!");
+        }
+        buildSavedSearchCityList();
+    }
+
+    let buildSavedSearchCityList = function () {
+        let ulParentEl = $("ul#saved-search-cities");
+        ulParentEl.empty();
+
+        searchNamesArray = JSON.parse(localStorage.getItem("stored-cities"));
+        searchNamesArray.sort();
+
+        $(searchNamesArray).each(function(index,item){
+            let liEl = $("<li>").attr("id",index);
+            let buttonEl = $("<button>").attr("type","button").attr("data-search-city",item)
+            buttonEl.addClass("btn btn-outline-success my-2 my-sm-0  saved-search-button");
+            buttonEl.text(item);
+
+            liEl.append(buttonEl);
+            ulParentEl.append(liEl);
+        });
+      };
+
+    //initialize main page elements
+    function init(){
+
+        //event delegation for saved search cities
+        let containerDiv = $("div#saved-search-parent");
+        containerDiv.on('click', '.saved-search-button', function (event) {
+            let searchCity = $(this).attr("data-search-city");
+
+            fetchForecastData(searchCity);
+        });
+
+        let searchButton = $("button.search-button");
+        searchButton.on('click',function(event){
+            let searchInput = $("input#search-input").val();
+            fetchForecastData(searchInput);
+            saveSearchCity(searchInput);
+        });
+
+        if(!localStorage.getItem("stored-cities")){
+            storedSearchCities = localStorage.setItem("stored-cities",""); 
+        }else{
+            //repopulate the list on refresh
+            buildSavedSearchCityList();
+        }
+    }
+
+    init();
+});
+
+
+
+  // let storedSearchCities = localStorage.setItem("storedCities","");   
 
         // var names = [];
         // names[0] = prompt("New member name?");
@@ -122,26 +186,3 @@ $(function() {
 
         // localstorage.names = JSON.stringify(names);
         // var storedNames = JSON.parse(localStorage.names);
-    }
-
-    //initialize main page elements
-    function init(){
-
-        //event delegation for saved search cities
-        let containerDiv = $("div#saved-search-parent");
-        containerDiv.on('click', '.saved-search-button', function (event) {
-
-          let searchCity = $(this).attr("data-search-city");
-          fetchForecastData(searchCity);
-          saveSearchCity(searchCity);
-        });
-
-        let searchButton = $("button.search-button");
-        searchButton.on('click',function(event){
-            let searchInput = $("input#search-input").val();
-            fetchForecastData(searchInput);
-        });
-    }
-
-    init();
-});
