@@ -1,7 +1,14 @@
+* { 
+    margin:0; 
+    padding:0; 
+    box-sizing:border-box; 
+  }
+
 body {
     font-family: 'Open Sans', sans-serif;
     font-size: 16px;
     line-height: 1;
+    margin:0;
   }
   
   textarea {
@@ -16,6 +23,22 @@ body {
     height: 100%; */
     min-height: 100%;
     min-width: 100%;
+  }
+
+  ul{
+    list-style-type: none;
+  }
+
+  /* button{
+    width:60%;
+  } */
+
+  #today-uv-index{
+    background-color: yellow;
+  }
+
+  .remove-card-div{
+    border: 1px solid white;
   }
   
   .jumbotron {
